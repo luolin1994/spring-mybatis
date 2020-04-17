@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.spring.mapper.PermissionMapper">
+    <resultMap id="BaseResultMap" type="com.example.spring.bean.Permission">
+        <id column="id" property="id"/>
+        <result column="url" property="url"/>
+        <result column="name" property="name"/>
+        <result column="parent_id" property="parent_id"/>
+    </resultMap>
+
+    <resultMap id="PermissionWithRoles" type="com.example.spring.bean.Permission" extends="BaseResultMap">
+        <collection property="roles" ofType="com.example.spring.bean.Role">
+            <id column="rid" property="id"/>
+            <result column="rname" property="name"/>
+            <result column="rnameZh" property="nameZh"/>
+        </collection>
+    </resultMap>
+
+    <select id="getAllPermissionWithRoles" resultMap="PermissionWithRoles">
+        select p.*,r.`id` as rid,r.`name` as rname,r.`nameZh` as rnameZh from permission p,permisiion_role pr,role r where p.`id`=pr.`pid` and pr.`rid`=r.`id` order by p.`id`
+    </select>
+</mapper>
