@@ -18,7 +18,7 @@
         </collection>
     </resultMap>
 
-    <select id="getAllPermissionWithRoles" resultMap="PermissionWithRoles">
+    <select id="getAllPermissionsWithRole" resultMap="PermissionWithRoles">
         select p.*,r.`id` as rid,r.`name` as rname,r.`nameZh` as rnameZh from permission p,permisiion_role pr,role r where p.`id`=pr.`pid` and pr.`rid`=r.`id` order by p.`id`
     </select>
 </mapper>
