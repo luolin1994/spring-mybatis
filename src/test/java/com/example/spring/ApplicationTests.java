@@ -1,21 +1,24 @@
 package com.example.spring;
 
+import com.example.spring.bean.Permission;
 import com.example.spring.bean.User;
+import com.example.spring.mapper.PermissionMapper;
 import com.example.spring.mapper.UserMapper;
-import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.junit.jupiter.api.Test;
 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 @SpringBootTest
@@ -23,6 +26,9 @@ class ApplicationTests {
 
     //记录器
     Logger logger = LoggerFactory.getLogger(getClass());
+
+    @Autowired
+    SqlSessionFactory sqlSessionFactory;
 
     @Test
     void contextLoads() {
@@ -37,7 +43,13 @@ class ApplicationTests {
 //        logger.warn("这是warn信息");
 //        logger.error("这是error日志...");
 
-        System.out.println(new BCryptPasswordEncoder().encode("123456"));
+      //  System.out.println(new BCryptPasswordEncoder().encode("123456"));
+
+
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        PermissionMapper mapper = sqlSession.getMapper(PermissionMapper.class);
+        List<Permission> allPermissionsWithRole = mapper.getAllPermissionsWithRole();
+        System.out.println(allPermissionsWithRole);
 
 
 

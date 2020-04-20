@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.*;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -17,6 +19,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
@@ -33,6 +37,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     LoginUserService loginUserService;
+    @Autowired
+    CustomAccessDecisionManager customAccessDecisionManager;
+    @Autowired
+    CustomFilterInvocationSecurityMetadataSource customFilterInvocationSecurityMetadataSource;
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -52,10 +60,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         //定制请求的授权规则
-        http.authorizeRequests().antMatchers("/").permitAll()
-                .antMatchers("/hello").hasRole("user")
-                .antMatchers("/admin").hasRole("admin")
-                .anyRequest().authenticated();//表示剩余的接口，登陆之后就能访问
+//        http.authorizeRequests().antMatchers("/").permitAll()
+//                .antMatchers("/hello").hasRole("user")
+//                .antMatchers("/admin").hasRole("admin")
+//                .anyRequest().authenticated();//表示剩余的接口，登陆之后就能访问
+        http.authorizeRequests().withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
+            @Override
+            public <O extends FilterSecurityInterceptor> O postProcess(O object) {
+                object.setAccessDecisionManager(customAccessDecisionManager);
+                object.setSecurityMetadataSource(customFilterInvocationSecurityMetadataSource);
+                return object;
+            }
+        });
 
         //开启自动配置的登陆功能
         //默认post形式的/login代表处理登陆的接口
@@ -64,7 +80,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .loginProcessingUrl("/doLogin") //登陆处理接口
                 .usernameParameter("username") //定义登陆时,用户名的 key，默认为 username
                 .passwordParameter("password") //定义登录时，用户密码的 key，默认为 password
-                .successHandler(new AuthenticationSuccessHandler() {
+                .successHandler(new AuthenticationSuccessHandler() { //登陆成功后的处理
                     @Override
                     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
                         RespBean ok = RespBean.ok("登录成功！",authentication.getPrincipal());
@@ -75,7 +91,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         out.close();
                     }
                 })
-                .failureHandler(new AuthenticationFailureHandler() {
+                .failureHandler(new AuthenticationFailureHandler() { //登陆失败后的处理
                     @Override
                     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
                         response.setContentType("application/json;charset=utf-8");
@@ -99,6 +115,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     }
                 })
                 .permitAll();//和表单登录相关的接口统统都直接通过
+
+        //异常的处理
+        http.csrf().disable().exceptionHandling().accessDeniedHandler(new AccessDeniedHandler() {
+            @Override
+            public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException e) throws IOException, ServletException {
+                response.setContentType("application/json;charset=utf-8");
+                PrintWriter out = response.getWriter();
+                RespBean respBean = new RespBean(403, "权限不够",e.getMessage());
+                out.write(new ObjectMapper().writeValueAsString(respBean));
+                out.flush();
+                out.close();
+            }
+        });
 
         //开启自动配置的注销功能
         http.logout()
