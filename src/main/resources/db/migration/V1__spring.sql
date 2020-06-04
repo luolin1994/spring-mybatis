@@ -2,6 +2,8 @@
 MySql： DataBase:mytest
  */
 
+SET FOREIGN_KEY_CHECKS=0;
+
 /*用户表 */
 DROP TABLE IF EXISTS `login_user`;
 create table `login_user`(
@@ -63,3 +65,5 @@ CREATE TABLE `permission_role` (
   CONSTRAINT `permission_role_ibfk_2` FOREIGN KEY (`rid`) REFERENCES `role` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=283 DEFAULT CHARSET=utf8;
 insert into permission_role values(1,2,1),(2,2,2),(3,3,1);
+
+SET FOREIGN_KEY_CHECKS=1;

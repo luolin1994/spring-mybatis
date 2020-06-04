@@ -22,7 +22,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import javax.servlet.ServletException;
@@ -80,17 +79,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .loginProcessingUrl("/doLogin") //登陆处理接口
                 .usernameParameter("username") //定义登陆时,用户名的 key，默认为 username
                 .passwordParameter("password") //定义登录时，用户密码的 key，默认为 password
-                .successHandler(new AuthenticationSuccessHandler() { //登陆成功后的处理
-                    @Override
-                    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                        RespBean ok = RespBean.ok("登录成功！",authentication.getPrincipal());
-                        response.setContentType("application/json;charset=utf-8");
-                        PrintWriter out = response.getWriter();
-                        out.write(new ObjectMapper().writeValueAsString(ok));
-                        out.flush();
-                        out.close();
-                    }
-                })
+//                .successHandler(new AuthenticationSuccessHandler() { //登陆成功后的处理
+//                    @Override
+//                    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+//                        RespBean ok = RespBean.ok("登录成功！",authentication.getPrincipal());
+//                        response.setContentType("application/json;charset=utf-8");
+//                        PrintWriter out = response.getWriter();
+//                        out.write(new ObjectMapper().writeValueAsString(ok));
+//                        out.flush();
+//                        out.close();
+//                    }
+//                })
                 .failureHandler(new AuthenticationFailureHandler() { //登陆失败后的处理
                     @Override
                     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
@@ -131,7 +130,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         //开启自动配置的注销功能
         http.logout()
-                .logoutSuccessUrl("/")
+                .logoutSuccessUrl("/login")
                 .logoutSuccessHandler(new LogoutSuccessHandler() {
                     @Override
                     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -143,8 +142,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     }
                 });
 
-        //开启记住我
-       // http.rememberMe();
+        //开启记住我,默认记住时长为两周 TokenBasedRememberMeServices
+        http.rememberMe();
+
+
 
 
     }
